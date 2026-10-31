@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BioLab — Practical Simulator</title>
+<style>
+:root{--bg:#eef2f5;--panel:#fff;--ink:#18212b;--muted:#657383;--line:#dce3e9;--blue:#245b8f;--blue2:#eaf2fa;--green:#18794e;--red:#b42318}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;overflow:hidden}
+body{background:var(--bg);color:var(--ink);font:14px/1.42 system-ui,Segoe UI,Arial}
+header{height:62px;background:#17324d;color:#fff;padding:9px 18px;display:flex;align-items:center;justify-content:space-between}
+header h1{font-size:20px;margin:0}
+header p{margin:0;color:#d7e4ef;font-size:12px}
+main{height:calc(100vh - 62px);width:100%;max-width:none;margin:0;padding:12px;display:grid;grid-template-columns:210px minmax(0,1fr);gap:12px;min-height:0}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px;min-height:0}
+main>aside{overflow:auto}
+h2{font-size:16px;margin:0 0 9px}
+h3{font-size:14px;margin:0 0 6px}
+select,button{font:inherit}
+select{width:100%;padding:9px;border:1px solid var(--line);border-radius:8px;background:white}
+.small{font-size:11px;color:var(--muted)}
+.memory{display:inline-block;margin-top:4px;padding:4px 8px;border-radius:7px;background:#fff6df;color:#73520b;font-size:11px;font-weight:650}
+.workspace{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(280px,.85fr);gap:13px;overflow:hidden}
+.lab-main{min-width:0;overflow:auto;padding-right:3px}
+.help-panel{min-width:0;overflow:auto;border-left:1px solid var(--line);padding-left:13px}
+.bench{display:flex;gap:10px;align-items:end;flex-wrap:wrap;background:#f8fafb;border:1px solid var(--line);border-radius:10px;padding:10px;margin:9px 0}
+.tube-wrap{width:100px;text-align:center}
+.tube{height:112px;width:48px;margin:0 auto 5px;border:3px solid #aebbc6;border-top:0;border-radius:0 0 19px 19px;position:relative;overflow:hidden;background:linear-gradient(90deg,#ffffffaa,#ffffff33)}
+.liquid{position:absolute;bottom:0;left:0;right:0;height:38%;background:#dceeff;transition:.5s;border-radius:0 0 15px 15px}
+.tube-label{font-size:11px;color:var(--muted)}
+.bottle{border:1px solid var(--line);background:white;border-radius:8px;padding:8px;min-width:88px;text-align:center}
+.bottle b{display:block;font-size:12px}.bottle span{font-size:10px;color:var(--muted)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+button.action{background:var(--blue);color:white;border:0;border-radius:8px;padding:9px 12px;cursor:pointer}
+button.secondary{background:white;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:8px 10px;cursor:pointer}
+button:disabled{opacity:.45;cursor:not-allowed}
+.stepbox{border:1px solid var(--line);border-radius:10px;padding:11px;margin-top:8px}
+.stephead{display:flex;justify-content:space-between;gap:8px;align-items:center}
+.pill{background:var(--blue2);color:var(--blue);padding:3px 8px;border-radius:99px;font-size:11px;white-space:nowrap}
+.options{display:grid;gap:6px;margin-top:8px}
+.option{padding:8px 10px;text-align:left;border:1px solid var(--line);background:white;border-radius:8px;cursor:pointer}
+.option:hover{border-color:var(--blue)}
+.feedback{padding:9px;border-radius:8px;margin-top:8px;background:#f0f7f3;border:1px solid #c9e6d5}
+.feedback.bad{background:#fff5f4;border-color:#f2cbc7}
+details{border-top:1px solid var(--line);padding:9px 0}
+summary{cursor:pointer;font-weight:650;color:var(--blue);font-size:13px}
+details p{margin:6px 0 0;color:#394653;font-size:12px}
+.progress{height:6px;background:#e8edf1;border-radius:10px;overflow:hidden;margin:8px 0}
+.progress div{height:100%;background:var(--green);width:0;transition:.3s}
+.result{background:#f1f7f3;border:1px solid #cce5d4;border-radius:9px;padding:10px;margin-top:8px}
+.revision{margin-top:8px;background:#fbfcfd;border:1px solid var(--line);border-radius:9px;padding:9px 10px}
+.revision p{margin:5px 0;font-size:12px}
+.safety-note{margin-top:8px}
+@media(max-width:900px){html,body{height:auto;overflow:auto}header{height:auto;display:block}main{height:auto;grid-template-columns:1fr}.workspace{grid-template-columns:1fr;overflow:visible}.lab-main,.help-panel,main>aside{overflow:visible}.help-panel{border-left:0;border-top:1px solid var(--line);padding:10px 0 0}}
+</style>
+</head>
+<body>
+<header><h1>🧪 BioLab — Practical Simulator</h1><p>Practise one experiment at a time. Try first; open hints only when you need them.</p></header>
+<main>
+<aside class="panel">
+<h2>Choose experiment</h2>
+<select id="picker"></select>
+<p class="small">Choose one test, practise it, then move to the next.</p>
+</aside>
+<section class="panel workspace">
+<div class="lab-main">
+<div class="stephead"><div><h2 id="title">Ninhydrin test</h2><div class="small" id="target">Detects amino acids</div><div class="memory" id="memory">Memory: amino acids → purple</div></div><span class="pill" id="counter">Step 1 of 3</span></div>
+<div class="progress"><div id="bar"></div></div>
+<div class="bench">
+<div class="tube-wrap"><div class="tube"><div class="liquid" id="liquid"></div></div><div class="tube-label" id="tubeLabel">Sample tube</div></div>
+<div class="bottle"><b id="bottle1">Sample</b><span>1 ml</span></div>
+<div class="bottle"><b id="bottle2">Ninhydrin</b><span>Reagent bottle</span></div>
+<div class="bottle"><b id="bottle3">Water bath</b><span>Heating station</span></div>
+</div>
+<div class="stepbox">
+<div class="stephead"><h3 id="stepTitle">Prepare the sample</h3><span class="small">Your action</span></div>
+<p id="question"></p>
+<div class="options" id="options"></div>
+<div id="feedback"></div>
+<div class="row" style="margin-top:12px"><button class="action" id="next" disabled>Next step →</button><button class="secondary" id="reset">Restart experiment</button></div>
+</div>
+<div id="result"></div>
+</div>
+<aside class="help-panel">
+<h2>Help & quick revision</h2>
+<details open><summary>Need help? — what should I do?</summary><p id="hint"></p></details>
+<details><summary>Why does this reaction happen?</summary><p id="why"></p></details>
+<details><summary>What should I write for observation and inference?</summary><p id="obs"></p></details>
+<details><summary>Quick viva question</summary><p id="viva"></p></details>
+</div>
+<details class="revision"><summary>Quick memory map — revise all tests</summary>
+<p><b>Ninhydrin:</b> amino acids → purple</p>
+<p><b>Molisch:</b> all carbohydrates → purple ring</p>
+<p><b>Biuret:</b> proteins / peptide bonds → violet</p>
+<p><b>Iodine:</b> starch → blue-black</p>
+<p><b>Benedict:</b> reducing sugar + heat → green/yellow/orange/brick-red</p>
+<p><b>Barfoed:</b> monosaccharide reacts faster → red precipitate</p>
+<p><b>Seliwanoff:</b> ketose → rapid cherry-red</p>
+<p><b>Bial:</b> pentose → blue-green</p>
+<p><b>Fehling:</b> reducing sugar + heat → brick-red precipitate</p>
+<p><b>Sudan III:</b> lipid → red-orange stain</p>
+<p><b>Lipid solubility:</b> insoluble in water, soluble in non-polar solvent</p>
+<p class="small"><b>Don't mix these up:</b> Benedict and Fehling both detect reducing sugars; Barfoed distinguishes them by reaction speed. Seliwanoff = ketose; Bial = pentose.</p>
+</details>
+<p class="small safety-note">Simulation only. Colours are illustrative. Real practical work must be instructor-supervised, especially with concentrated acids, solvents or heat.</p>
+</aside>
+</section>
+</main>
+<script>
+const E = [
+{id:"nin",name:"Ninhydrin test",target:"Amino acids",reagent:"0.2% ninhydrin in acetone",color:"#7350a6",positive:"Purple / blue-violet colour",obs:"A purple or blue-violet colour develops (proline may give yellow). Inference: amino acids with free amino groups are present.",why:"Ninhydrin reacts with free amino groups. The reaction produces a coloured compound called Ruhemann’s purple. Proline is an exception because it has a secondary amino group.",viva:"What is the purpose of ninhydrin? — To detect amino acids/free amino groups.",steps:[
+["Take sample","What should you place in a clean test tube?",["1 ml of sample","2 ml of concentrated acid","A dry sample on a slide"],0,"Use a clean test tube and 1 ml sample."],
+["Add reagent","Which reagent should be added?",["2–5 drops of 0.2% ninhydrin in acetone","Alpha-naphthol solution","Iodine solution"],0,"Ninhydrin is the reagent that reacts with free amino groups."],
+["Heat","What should you do next?",["Heat in a water bath for about 5 minutes","Add concentrated sulphuric acid","Freeze the tube"],0,"Gentle heating helps the colour reaction develop."]
+],hint:"Sample (1 ml) → add 2–5 drops ninhydrin → water bath about 5 minutes → observe colour."},
+{id:"mol",name:"Molisch's test",target:"General test for carbohydrates",reagent:"Alpha-naphthol (Molisch reagent) + concentrated H₂SO₄",color:"#873ca0",positive:"Violet / purple ring at the interface",obs:"A violet/purple ring appears where the two liquid layers meet. Inference: carbohydrate is present.",why:"Concentrated acid dehydrates carbohydrates to furfural or hydroxymethylfurfural derivatives. These react with alpha-naphthol to form a purple product.",viva:"Why is acid added carefully along the side? — To form a separate layer and make the ring visible at the interface.",steps:[
+["Take sample","What volume of sample is used?",["1 ml in a clean test tube","10 ml in a beaker","A dry powder on a slide"],0,"Start with 1 ml sample in a test tube."],
+["Add Molisch reagent","What do you add next?",["2 ml alpha-naphthol solution","Ninhydrin","Benedict's reagent"],0,"Alpha-naphthol is the Molisch reagent."],
+["Layer acid","How should concentrated H₂SO₄ be added?",["Carefully down the tilted tube wall to form a lower layer","Pour rapidly and shake hard","Add it directly to your hand"],0,"Careful layering creates an interface where the purple ring forms. Concentrated acid is corrosive; this is instructor-supervised."]
+],hint:"Sample 1 ml → alpha-naphthol 2 ml → carefully layer concentrated H₂SO₄ as specified in your journal. Do not shake."},
+{id:"biu",name:"Biuret test",target:"Proteins / peptide bonds",reagent:"Biuret reagent",color:"#7540a0",positive:"Violet / purple colour",obs:"Violet or purple colour. Inference: peptide bonds are present, indicating protein/peptides.",why:"In alkaline conditions, copper ions form a coloured complex with peptide bonds. More than one peptide bond is needed for the typical positive protein reaction.",viva:"Which bond does Biuret detect? — Peptide bond.",steps:[
+["Take sample","What should you take?",["1 ml sample","5 ml oil","A dry crystal on a slide"],0,"Use 1 ml of the liquid sample."],
+["Add reagent","Your practical notes specify which amount?",["3 ml Biuret reagent","2 ml iodine","2 ml ninhydrin"],0,"Use the Biuret reagent. Your notebook recipe contains copper sulphate, sodium potassium tartrate, KI and NaOH."],
+["Wait","What next?",["Keep at room temperature for about 10 minutes","Boil strongly for 20 minutes","Add concentrated acid"],0,"Allow the colour to develop at room temperature."]
+],hint:"Sample 1 ml → Biuret reagent 3 ml → keep at room temperature about 10 minutes."},
+{id:"iod",name:"Iodine test",target:"Starch / polysaccharides",reagent:"Iodine + potassium iodide solution",color:"#172b70",positive:"Blue-black (starch); reddish-brown (glycogen)",obs:"Blue-black indicates starch. Glycogen may give reddish-brown. Inference depends on the colour.",why:"Iodine fits into the helical structure of starch (especially amylose), producing a blue-black complex.",viva:"What is the positive colour for starch? — Blue-black.",steps:[
+["Take sample","What do you place in the tube?",["A small amount of sample solution","Only concentrated acid","Ninhydrin powder"],0,"Use the sample solution."],
+["Add iodine","Which reagent is used?",["Iodine solution (iodine + KI)","Biuret reagent","Seliwanoff reagent"],0,"Iodine solution is the starch indicator."],
+["Observe","A blue-black colour appears. What does it indicate?",["Starch is present","Protein is present","Amino acids are present"],0,"Blue-black is the characteristic starch result."]
+],hint:"Add iodine solution to the sample and observe. Blue-black = starch; reddish-brown can indicate glycogen."},
+{id:"ben",name:"Benedict's test",target:"Reducing sugars",reagent:"Benedict's reagent",color:"#bd4a25",positive:"Green / yellow / orange to brick-red precipitate",obs:"Blue = negative. Green, yellow, orange or brick-red precipitate = positive for reducing sugar; intensity is only an approximate indication.",why:"Reducing sugars reduce blue Cu²⁺ ions to cuprous oxide (Cu₂O), which forms a coloured precipitate. Benedict's reagent contains copper sulphate, sodium citrate and sodium carbonate.",viva:"What is the brick-red precipitate? — Cuprous oxide (Cu₂O).",steps:[
+["Take sample","How much sample is used in your notes?",["2 ml sample","1 drop oil","10 ml sample"],0,"Your notes specify 2 ml sample."],
+["Add reagent","How much Benedict's reagent?",["2 ml Benedict's reagent","2 ml iodine","2 ml ninhydrin"],0,"Benedict's reagent contains copper sulphate, sodium citrate and sodium carbonate."],
+["Heat","How do you develop the reaction?",["Boiling water bath about 5 minutes","Add concentrated sulphuric acid","Keep in freezer"],0,"Heating allows the reducing sugar to reduce copper ions."]
+],hint:"Sample 2 ml + Benedict's reagent 2 ml → boiling water bath about 5 minutes → note colour/precipitate."},
+{id:"bar",name:"Barfoed's test",target:"Monosaccharide vs reducing disaccharide",reagent:"Barfoed's reagent (copper acetate in acetic acid)",color:"#a64b2a",positive:"Rapid red precipitate suggests monosaccharide",obs:"A rapid red precipitate supports a monosaccharide. A slower reaction may indicate a reducing disaccharide. Follow the exact timing in your journal.",why:"Monosaccharides generally reduce copper ions faster in the acidic Barfoed reagent than reducing disaccharides. Timing is essential; prolonged heating can cause misleading results.",viva:"What is the main use of Barfoed's test? — To distinguish monosaccharides from reducing disaccharides based on reaction speed.",steps:[
+["Mix sample","Which volumes are used?",["1 ml sample + 2 ml Barfoed reagent","2 ml sample + 2 ml iodine","1 ml sample + 3 ml Biuret"],0,"Barfoed reagent contains copper acetate in acetic acid."],
+["Heat","What matters most?",["Heat in a boiling water bath and note the time","Heat indefinitely","Do not heat"],0,"The time to form precipitate is part of the interpretation."],
+["Interpret","A red precipitate forms quickly. What is likely?",["Monosaccharide","Non-reducing sugar","Protein"],0,"A rapid positive reaction supports a monosaccharide. Use your manual's time cut-off."]
+],hint:"Mix 1 ml sample + 2 ml reagent; heat and time the appearance of red precipitate. Do not overheat."},
+{id:"sel",name:"Seliwanoff's test",target:"Ketose vs aldose sugars",reagent:"Resorcinol + concentrated HCl",color:"#bd263b",positive:"Rapid cherry-red colour",obs:"Rapid cherry-red colour supports a ketose such as fructose. Aldoses react more slowly and may give a faint pink/red colour.",why:"Ketoses are dehydrated more rapidly by acid to form hydroxymethylfurfural, which reacts with resorcinol to give a cherry-red product.",viva:"Which sugar gives a rapid cherry-red result? — A ketose, for example fructose.",steps:[
+["Take sample","What volume is used?",["1 ml sample","5 ml oil","A dry protein sample"],0,"Begin with 1 ml sample."],
+["Add reagent","Choose Seliwanoff reagent.",["5 ml resorcinol + HCl reagent","Alpha-naphthol + H₂SO₄","Iodine + KI"],0,"Resorcinol in acid is Seliwanoff's reagent."],
+["Heat and time","What should you look for?",["Rapid cherry-red colour","Blue-black colour","Purple ring"],0,"A rapid cherry-red reaction suggests a ketose. Timing matters."]
+],hint:"1 ml sample + 5 ml reagent; heat only for the time stated in your manual and observe promptly."},
+{id:"bial",name:"Bial's test",target:"Pentose sugars",reagent:"Orcinol + ferric chloride + concentrated HCl",color:"#16856b",positive:"Blue-green colour",obs:"Blue-green colour supports the presence of pentose sugars.",why:"Pentoses are dehydrated by acid to furfural, which reacts with orcinol in the presence of ferric ions to produce a blue-green colour.",viva:"What is the positive colour in Bial's test? — Blue-green.",steps:[
+["Take sample","What volume do you take?",["1 ml sample","10 ml sample","A drop of oil"],0,"Use 1 ml sample."],
+["Add reagent","Which is Bial's reagent?",["2 ml orcinol + ferric chloride + HCl reagent","Iodine + KI","Ninhydrin"],0,"These are the key components of Bial's reagent."],
+["Heat","What result supports pentose?",["Blue-green colour","Purple ring","Blue-black colour"],0,"Blue-green is the characteristic pentose result."]
+],hint:"1 ml sample + 2 ml Bial's reagent → heat in water bath about 5 minutes as noted → observe blue-green."},
+{id:"feh",name:"Fehling's test",target:"Reducing sugars",reagent:"Fresh Fehling A + Fehling B",color:"#a94324",positive:"Brick-red precipitate",obs:"Brick-red precipitate indicates a reducing sugar.",why:"Fehling A supplies copper sulphate. Fehling B supplies alkaline sodium potassium tartrate. Reducing sugars reduce Cu²⁺ to brick-red Cu₂O on heating.",viva:"What is in Fehling A and B? — A: copper sulphate; B: alkaline sodium potassium tartrate.",steps:[
+["Prepare reagent","Which solutions are combined freshly?",["Fehling A + Fehling B","Ninhydrin + iodine","Molisch + Bial"],0,"Mix equal amounts as directed by your practical manual."],
+["Add sample","What do you do next?",["Mix with the sugar sample in a test tube","Add concentrated acid","Smell the reagent"],0,"The copper complex reacts with reducing sugars on heating."],
+["Heat","What is a positive result?",["Brick-red precipitate","Blue-black colour","Purple ring"],0,"Brick-red Cu₂O precipitate indicates reducing sugar."]
+],hint:"Mix Fehling A and B freshly in the manual's ratio, add sample and heat. Positive = brick-red precipitate."},
+{id:"sud",name:"Sudan III test",target:"Lipids",reagent:"Sudan III stain",color:"#d64b25",positive:"Red-orange stained oil / lipid layer",obs:"Lipid droplets or the oil layer stain red-orange. Inference: lipid is present.",why:"Sudan III is fat-soluble. It dissolves preferentially in the lipid phase and colours it red-orange.",viva:"Why does Sudan III stain fat? — It is a fat-soluble dye that partitions into the lipid phase.",steps:[
+["Prepare sample","What sample is appropriate?",["Oil or a lipid-containing sample","Only a DNA solution","A starch crystal"],0,"Use a sample that may contain lipid."],
+["Add stain","Which reagent?",["Sudan III","Benedict's reagent","Biuret reagent"],0,"Sudan III is the lipid stain."],
+["Observe","What is positive?",["Red-orange stained oil droplets/layer","Purple ring","Blue-green solution"],0,"The dye colours the lipid phase."]
+],hint:"Add Sudan III to the sample and observe whether the oil/lipid phase becomes red-orange."},
+{id:"lip",name:"Lipid solubility",target:"Solubility behaviour of lipids",reagent:"Water and an approved non-polar solvent",color:"#e0a12c",positive:"Insoluble in water; more soluble in non-polar solvent",obs:"Lipid does not dissolve in water but dissolves better in a suitable non-polar solvent.",why:"Most lipids are hydrophobic: their large non-polar regions do not interact favourably with polar water. Non-polar solvents dissolve them better ('like dissolves like').",viva:"Why are lipids insoluble in water? — They are largely non-polar and hydrophobic.",steps:[
+["Set up comparison","What should you prepare?",["Separate tubes with water and approved non-polar solvent","One tube with acid only","One tube with iodine only"],0,"Compare the same lipid sample in two solvents."],
+["Add sample","What should be kept equal?",["Similar amounts of the same lipid sample","Different unknown samples","Protein in one tube and starch in the other"],0,"Keep the sample amount similar for a fair comparison."],
+["Observe","What is expected?",["Does not dissolve in water; dissolves better in non-polar solvent","Dissolves completely in water","Turns blue-black"],0,"This demonstrates the hydrophobic nature of lipids."]
+],hint:"Compare equal amounts of lipid in water and an instructor-approved non-polar solvent. Never use solvents outside supervised lab instructions."}
+];
+const MEMORY = {
+ nin:"AMINO → NINHYDRIN → PURPLE",
+ mol:"CARBOHYDRATE → MOLISCH → PURPLE RING",
+ biu:"PROTEIN → BIURET → VIOLET",
+ iod:"STARCH → IODINE → BLUE-BLACK",
+ ben:"REDUCING SUGAR → BENEDICT + HEAT → COLOURED PRECIPITATE",
+ bar:"BARFOED = SPEED TEST → MONOSACCHARIDE IS FASTER",
+ sel:"KETOSE → SELIWANOFF → CHERRY-RED",
+ bial:"PENTOSE → BIAL → BLUE-GREEN",
+ feh:"REDUCING SUGAR → FEHLING + HEAT → BRICK-RED",
+ sud:"FAT → SUDAN III → RED-ORANGE",
+ lip:"LIPID: WATER SAYS NO; NON-POLAR SOLVENT SAYS YES"
+};
+let current=0,step=0;
+const $=id=>document.getElementById(id);
+function render(){
+ const e=E[current]; $("title").textContent=e.name;$("target").textContent="Detects: "+e.target;$("memory").textContent="Remember: "+MEMORY[e.id];
+ $("counter").textContent=step<e.steps.length?`Step ${step+1} of ${e.steps.length}`:"Completed";
+ $("bar").style.width=(step/e.steps.length*100)+"%";
+ $("stepTitle").textContent=step<e.steps.length?e.steps[step][0]:"Experiment complete";
+ $("question").textContent=step<e.steps.length?e.steps[step][1]:"You have finished the procedure. Review the result and explanation below.";
+ $("options").innerHTML="";$("feedback").innerHTML="";$("next").disabled=true;
+ $("next").textContent=step===e.steps.length-1?"Show result":"Next step →";
+ $("liquid").style.background=step===e.steps.length?e.color:"#dceeff";
+ $("liquid").style.height=step===e.steps.length?"62%":"38%";
+ $("tubeLabel").textContent=step===e.steps.length?"Reaction result":"Sample tube";
+ $("bottle1").textContent="Sample";$("bottle2").textContent=step===0?"Reagent":e.reagent;$("bottle3").textContent="Water bath";
+ if(step<e.steps.length){
+   const s=e.steps[step];s[2].forEach((v,i)=>{let b=document.createElement("button");b.className="option";b.textContent=String.fromCharCode(65+i)+". "+v;b.onclick=()=>choose(i);$("options").appendChild(b)});
+ } else {
+   $("options").innerHTML=`<div class="result"><b>Simulated observation</b><p>${e.positive}</p><b>Inference</b><p>${e.obs}</p></div>`;
+ }
+ $("hint").textContent=e.hint;$("why").textContent=e.why;$("obs").textContent=e.obs;$("viva").textContent=e.viva;
+ $("result").innerHTML="";
+}
+function choose(i){
+ const e=E[current],s=e.steps[step],ok=i===s[3];
+ document.querySelectorAll(".option").forEach(b=>b.disabled=true);
+ $("feedback").className="feedback"+(ok?"":" bad");
+ $("feedback").innerHTML=ok?`<b>✓ Correct.</b> ${s[4]}`:`<b>Not quite.</b> ${s[4]} Try again when you're ready.`;
+ if(ok){$("next").disabled=false}else{document.querySelectorAll(".option").forEach(b=>b.disabled=false);$("feedback").innerHTML+=`<br><span class="small">Try another option — no penalty.</span>`}
+}
+$("next").onclick=()=>{if(step<E[current].steps.length){step++;render()}};
+$("reset").onclick=()=>{step=0;render()};
+function selectExp(i){current=i;step=0;render();$("picker").value=E[i].id}
+E.forEach((e)=>{let o=document.createElement("option");o.value=e.id;o.textContent=e.name;$("picker").appendChild(o)});
+$("picker").onchange=()=>selectExp(E.findIndex(e=>e.id===$("picker").value));
+selectExp(0);
+</script>
+</body></html>
